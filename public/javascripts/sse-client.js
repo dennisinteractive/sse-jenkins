@@ -8,7 +8,8 @@ jQuery(document).ready(function($) {
 
   // SSE
   if (!!window.EventSource) {
-    var serverURL = Drupal.settings.dennis_sse['server'];
+    // This is just for Drupal. You can modify the server url as you like.
+    var serverURL = Drupal.settings.dennis_sse['server']; // http://myserver:port/ssestatus
     var source = new EventSource(serverURL);
   } else {
     // Result to xhr polling :(
