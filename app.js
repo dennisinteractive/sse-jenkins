@@ -24,6 +24,7 @@ var reconnectTime = 15000;
 
 // all environments
 app.set('port', process.env.PORT || 8090);
+app.set('mapfile', process.env.MAPFILE || '/path/to/mapping.file')
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.use(express.favicon());
@@ -100,6 +101,42 @@ function debugHeaders(req) {
   sys.puts('\n\n');
 }
 
+/**
+ * Helper function to reduce a URL to its domain sans the protocol.
+ */
+function stripUrl(val) {
+  var reg = /^(http\:\/\/|https\:\/\/)?([^\/:?#]+)(?:[\/:?#]|$)/i;
+
+  var retVal = val;
+  // Strip off the protocol part of the url, 
+  // just to simplify our matching and storing.
+  if ( (retVal = reg.exec(val)) == null ) {
+    return val;
+  }
+  else {
+    return retVal[2]; 
+  }
+}
+
+/**
+ * Wrapper to send an SSE message to an array of connections.
+ */
+function messageSites(sitesToMessage) {
+  var len = sitesToMessage.length;
+  for (var j=0; j<len; j++) {
+    // Broadcast to all registered connections for this site.
+    if (connections[sitesToMessage[j]]) {
+      connections[sitesToMessage[j]].forEach(function (res) {
+        console.log("Sending broadcast message to connected editors for " + sitesToMessage[j]);
+        sendSSE(sitesToMessage[j], res, (new Date).getTime(), message);
+      });
+    }
+    else {
+      console.log("No open connections to send notifications for " + sitesToMessage[j]);
+    }
+  }
+}
+
 app.use(express.json()); // to support JSON-encoded bodies
 app.use(express.urlencoded()); // to support URL-encoded bodies
 
@@ -150,7 +187,8 @@ app.post('/rcvstatus', function(req, res) {
   var buildNum = req.body.build.number;
   var buildStatus = req.body.build.status;
   var buildPhase = req.body.build.phase;
-  var siteFor = req.body.build.parameters.Site;
+  var siteFor = stripUrl(req.body.build.parameters.Site);
+  var sitesToMessage = [ siteFor ];
 
   res.writeHead(200, {'Content-Type': 'text/html'});
   res.write('Thank you, status message received.');
@@ -159,7 +197,7 @@ app.post('/rcvstatus', function(req, res) {
   switch ( buildPhase ) {
     case 'STARTED':
       message = "A code release for this site will start in one minute." +
-                 "Please save your unfinished work to avoid loss of data.";
+                "Please save your unfinished work to avoid loss of data.";
       break;
     case 'COMPLETED':
       // Do Nothing. Send nothing.
@@ -172,18 +210,58 @@ app.post('/rcvstatus', function(req, res) {
         message = "There was a problem in the release. Please contact the dev team.";
       }
       break;
+      // Do nothing for other phases.
+    default:
+      return;
   }
 
-  // Broadcast to all registered connections for this site.
-  if (connections[siteFor]) {
-    connections[siteFor].forEach(function (res) {
-      console.log("Sending broadcast message to connected editors for " + siteFor);
-      sendSSE(siteFor, res, (new Date).getTime(), message);
-    });
-  }
-  else {
-    console.log("No open connections to send notifications for " + siteFor);
-  }
+  // Mapfile with any aliases for the siteFor,
+  // as some sites may have multiple urls like auth servers.
+  var mapfile = app.get('mapfile');
+
+  fs.stat(mapfile, function(err, stats) {
+    if (!err && stats.isFile()) {
+      fs.readFile(mapfile, 'utf8', function (err, data) {
+        if (err) {
+          console.log('Error reading mapfile: ' + err);
+          return;
+        }
+
+        // Read the data in JSON format from the map file.
+        data = JSON.parse(data);
+        
+        var patt = new RegExp(siteFor);
+        var matched = false;
+        // Going through all arrays for matching siteFor.
+        for (var key in data) {
+          var len = data[key].length;
+          for (var i=0; i<len; i++) {
+            // As soon as match found, break. 'key' holds the array which we require.
+            if (patt.test(data[key][i]) ) {
+              matched = true;
+              break;
+            }
+          }
+          if (matched) {
+            break;
+          }
+        }
+
+        if (matched) {
+          // Pass all site names corresponding to siteFor through 
+          // a stripping function before they are sent for messaging.
+          sitesToMessage = data[key].map(stripUrl);
+          console.log('Message will be sent to connections on these urls: ');
+          console.log(sitesToMessage);
+        }
+        messageSites(sitesToMessage);
+      });
+    }
+    else {
+      messageSites(sitesToMessage);
+    }
+
+  });
 
 });
 
