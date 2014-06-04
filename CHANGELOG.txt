@@ -1,0 +1,10 @@
+v1.0.1 2014-06-04
+-----------------
+
+- Added support for mapping file that contains alternative urls to connections
+  to be notified additionally when sending a message.
+
+v1.0.0 2014-05-30
+-----------------
+
+- First tagged release.
