@@ -22,6 +22,11 @@ How to use:
 1. Install node.js and npm - http://www.joyent.com/blog/installing-node-and-npm
 2. Download this repo.
 3. Optionally set the PORT env variable.
-3. Start the app: node app.js
-4. Setup your Jenkins (deployment) job to notify your server (http://yourserver.com:port/rcvstatus) using JSON over HTTP.
-5. Now assuming your site editors are running the above client-side JS, whenever a site deployment is triggered, they would get a notification.
+4. Optionally also set the MAPFILE env variable if you would like to provide a mapping file (in JSON format) to additional urls to be notified. Sample format: {
+  "cp" : ["http://cloudpro.vm.didev.co.uk", "http://cloudprod7.vm.didev.co.uk"],
+  "ae" : ["http://autoexpressuk.vm.didev.co.uk", "http://autoexpressuk2.vm.didev.co.uk"]
+}
+ 
+5. Start the app: node app.js
+6. Setup your Jenkins (deployment) job to notify your server (http://yourserver.com:port/rcvstatus) using JSON over HTTP.
+7. Now assuming your site editors are running the above client-side JS, whenever a site deployment is triggered, they would get a notification.
