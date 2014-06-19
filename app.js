@@ -73,6 +73,7 @@ function sseHeaders(res) {
 function sendSSE(site, res, id, message) {
   res.write('id: ' + id + '\n');
   res.write("data: {\n");
+  res.write("data: \"title\": \"" + title + "\",\n");
   res.write("data: \"timestamp\": \"" + id + "\",\n");
   res.write("data: \"msg\": \"" + message + "\"\n");
   res.write("data: }\n\n");
@@ -196,18 +197,24 @@ app.post('/rcvstatus', function(req, res) {
 
   switch ( buildPhase ) {
     case 'STARTED':
-      message = "A code release for this site will start in one minute." +
-                "Please save your unfinished work to avoid loss of data.";
+      title = "Deployment starting!";
+      message = "A code update for this site will start in one minute, which will temporarily put the site " +
+                "& CMS in maintenance mode. Please save your unfinished work immediately to avoid loss of data.";
       break;
     case 'COMPLETED':
       // Do Nothing. Send nothing.
       return;
     case 'FINISHED':
       if (buildStatus == 'SUCCESS') {
-        message = "Deployment completed successfully.";
+        title = "Deployment completed :-)";
+        message = "The code update has finished successfully and the site and CMS should be back online. " +
+                  "Contact your product manager if you have any problems.";
       }
       else {
-        message = "There was a problem in the release. Please contact the dev team.";
+        title = "Deployment problem :-(";
+        message = "A problem occurred during the code update. We are aware and will be attempting to " +
+                  "resolve the issue and redeploy as soon as possible. There may be issues with the " +
+                  "site and CMS during this period.";
       }
       break;
       // Do nothing for other phases.

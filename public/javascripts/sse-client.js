@@ -51,8 +51,9 @@ jQuery(document).ready(function($) {
   source.onmessage = function(e) {
     var data = JSON.parse(e.data);
     var formatted_time = get_formatted_date(data.timestamp);
+    var title = data.title || "Alert!";
     $("#jquery-notify-container").notify("create", {
-      title: "Alert!",
+      title: title,
       timestamp: formatted_time,
       text: data.msg
     });
