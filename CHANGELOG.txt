@@ -1,3 +1,9 @@
+v1.0.2 2014-06-20
+-----------------
+
+- Messages have a title now.
+- Messages have been re-worded.
+
 v1.0.1 2014-06-04
 -----------------
 
