@@ -1,0 +1,23 @@
+{
+  "browser": true,
+  "esnext": true,
+  "expr" : true,
+  "bitwise": true,
+  "curly": true,
+  "eqeqeq": true,
+  "immed": true,
+  "latedef": true,
+  "loopfunc": true,
+  "newcap": true,
+  "noarg": true,
+  "regexp": true,
+  "undef": true,
+  "unused": true,
+  "trailing": true,
+  "smarttabs": true,
+  "globals": {
+    "require": true,
+    "exports": true,
+    "module": true
+  }
+}
