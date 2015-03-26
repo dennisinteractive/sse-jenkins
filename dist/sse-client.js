@@ -600,6 +600,7 @@ if (typeof module !== 'undefined') {
       this.clickToClose = o.clickToClose || false
       this.timeoutAfterMove = o.timeoutAfterMove || false
       this.container = o.container
+      this.showAdditional = o.showAdditional || false
 
       try { this._setupEl() } // attempt to setup elements
       catch (e) {
@@ -665,7 +666,9 @@ if (typeof module !== 'undefined') {
 
          if (ENV.isArray(msg.html)) msg.html = '<ul><li>'+msg.html.join('<li>')+'</ul>'
 
+         msg.html += "<div id='humane-additional-msgs' style='font-size:75%;opacity:0.75;'/>"
          this.el.innerHTML = msg.html
+         this._computeAdditionalMsgs()
          this.currentMsg = msg
          this.el.className = this.baseCls
          if (ENV.transSupport) {
@@ -675,6 +678,15 @@ if (typeof module !== 'undefined') {
             this._showMsg()
          }
 
+      },
+      _computeAdditionalMsgs: function() {
+         if (!this.showAdditional) return
+         var l = this.queue.length
+         if (l > 0) {
+            var elt = doc.getElementById("humane-additional-msgs")
+            if (!elt) return
+            elt.innerHTML = "<hr>"+l+" message"+(l>1?"s":"")+" after this one." // TODO: Localize this string computation
+         }
       },
       _setOpacity: function (opacity) {
          if (ENV.useFilter){
@@ -767,6 +779,7 @@ if (typeof module !== 'undefined') {
          msg.html = html
          if (cb) msg.cb = cb
          this.queue.push(msg)
+         this._computeAdditionalMsgs()
          this._run()
          return this
       },
@@ -798,7 +811,8 @@ if (typeof module !== 'undefined') {
     timeout: 0,
     clickToClose: true,
     waitForMove: false,
-    timeoutAfterMove: 0
+    timeoutAfterMove: 0,
+    showAdditional: true
   };
   var config;
   var logger;
@@ -862,14 +876,15 @@ if (typeof module !== 'undefined') {
     content.timestamp = content.timestamp || undefined;
     // Create humane-js instance if not created yet.
     logger = logger || humane.create(config);
-    // Spawn notifier instances per type.
-    logger[type] = logger[type] || logger.spawn({ addnCls: 'humane-libnotify-' + type});
 
-    logger[type]([
+    // Display the notification.
+    logger.log([
       '<div class="message-title">' + content.title + '</div>',
       '<div class="message-timestamp">' + getFormattedDate(content.timestamp) + '</div>',
       '<div class="message">' + content.msg + '</div>'
-    ]);
+    ], {
+      addnCls: 'humane-libnotify-' + type
+    });
 
     return logger;
   }
