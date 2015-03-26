@@ -35,7 +35,7 @@ module.exports = function(grunt) {
 
     cssmin: {
       options: {
-        compatibility: 'ie8'
+        shorthandCompacting: false
       },
       dist: {
         files: {
