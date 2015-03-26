@@ -6,11 +6,8 @@ module.exports = function(grunt) {
 
     browserify: {
       dist: {
-        options: {
-          // transform: ['brfs'],
-        },
-        src: './<%= pkg.name %>.js',
-        dest: 'dist/<%= pkg.name %>.js'
+        src: './sse-client.js',
+        dest: 'dist/sse-client.js'
       }
     },
 
@@ -20,26 +17,32 @@ module.exports = function(grunt) {
           wrapper: ['(function(f) { f() }(function(){var define,module,exports;return ', '}));'],
           separator: '',
         },
-        src: ['dist/<%= pkg.name %>.js'],
+        src: ['<%= browserify.dist.dest %>'],
         dest: './'
       }
     },
 
-    eol: {
+    uglify: {
+      options: {
+        sourceMap: true
+      },
       dist: {
-        options: {
-          replace: true
-        },
         files: {
-          src: ['dist/**']
+          'dist/sse-client.min.js': ['<%= browserify.dist.dest %>']
         }
       }
     },
 
-    uglify: {
+    cssmin: {
+      options: {
+        compatibility: 'ie8'
+      },
       dist: {
         files: {
-          'dist/<%= pkg.name %>.min.js': ['<%= browserify.dist.dest %>']
+          'dist/sse-client.css': [
+            './node_modules/humane-js/themes/libnotify.css',
+            'sse-client.css'
+          ]
         }
       }
     },
@@ -50,7 +53,8 @@ module.exports = function(grunt) {
       },
       files: [
         'Gruntfile.js',
-        '<%= pkg.name %>.js'
+        './app.js',
+        './sse-client.js'
       ]
     },
 
@@ -61,17 +65,17 @@ module.exports = function(grunt) {
 
     bytesize: {
       dist: {
-        src: ['dist/<%= pkg.name %>.*']
+        src: ['dist/*.js', 'dist/*.css']
       }
     }
   });
 
   grunt.loadNpmTasks('grunt-browserify');
   grunt.loadNpmTasks('grunt-bytesize');
+  grunt.loadNpmTasks('grunt-contrib-cssmin');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-watch');
-  grunt.loadNpmTasks('grunt-eol');
   grunt.loadNpmTasks('grunt-wrap');
 
   grunt.registerTask('test', [
@@ -81,8 +85,8 @@ module.exports = function(grunt) {
     'test',
     'browserify',
     'wrap',
-    'eol',
     'uglify',
+    'cssmin',
     'bytesize'
   ]);
 };
