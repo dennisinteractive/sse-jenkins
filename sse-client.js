@@ -13,7 +13,8 @@
     timeout: 0,
     clickToClose: true,
     waitForMove: false,
-    timeoutAfterMove: 0
+    timeoutAfterMove: 0,
+    showAdditional: true
   };
   var config;
   var logger;
@@ -77,14 +78,15 @@
     content.timestamp = content.timestamp || undefined;
     // Create humane-js instance if not created yet.
     logger = logger || humane.create(config);
-    // Spawn notifier instances per type.
-    logger[type] = logger[type] || logger.spawn({ addnCls: 'humane-libnotify-' + type});
 
-    logger[type]([
+    // Display the notification.
+    logger.log([
       '<div class="message-title">' + content.title + '</div>',
       '<div class="message-timestamp">' + getFormattedDate(content.timestamp) + '</div>',
       '<div class="message">' + content.msg + '</div>'
-    ]);
+    ], {
+      addnCls: 'humane-libnotify-' + type
+    });
 
     return logger;
   }
