@@ -13,7 +13,7 @@ The server consists of two components
 Client side
 -----------
 
-The client side javascript could implement a straight forward EventSource connection. Sample JS and a polyfill (https://github.com/Yaffle/EventSource) has been included in public/javascripts/ folder. The notifications style uses Growl-like notifications using the jquery-notify widget https://github.com/ehynds/jquery-notify. The associated JS & CSS files are in the public/ folder as well.
+The client-side JavaScript implements a straightforward EventSource connection. It includes an EventSource polyfill (https://github.com/Yaffle/EventSource) to ensure compatibility and the notifications are displayed using [humane.js](https://github.com/wavded/humane-js). The client JS and CSS are in the `dist/` folder.
 
 A new version of the client script uses a standalone library. This supports asynchronous loading and execution and does not depend on jQuery or jQuery notify. This script and its CSS can be found in the `dist/` folder.
 
@@ -28,7 +28,7 @@ Load the CSS
 Load the client
 
 ```js
-<!-- // Load via a stanard script tag -->
+<!-- // Load via a standard script tag -->
 <script async src="//www.example.com/sse-client.min.js"></script>
 
 <!-- // Or a compatible snippet -->
