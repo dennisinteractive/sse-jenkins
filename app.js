@@ -59,7 +59,7 @@ function sseHeaders(res) {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': '*'
   });
   res.write(":" + new Array(2049).join(" ") + "\n"); // 2kB padding for IE
   res.write("retry: " + reconnectTime + '\n');

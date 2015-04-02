@@ -15,7 +15,7 @@ module.exports = function(grunt) {
       basic: {
         options: {
           wrapper: ['(function(f) { f() }(function(){var define,module,exports;return ', '}));'],
-          separator: '',
+          separator: ''
         },
         src: ['<%= browserify.dist.dest %>'],
         dest: './'
@@ -49,7 +49,7 @@ module.exports = function(grunt) {
 
     jshint: {
       options: {
-        jshintrc : '.jshintrc',
+        jshintrc : '.jshintrc'
       },
       files: [
         'Gruntfile.js',
