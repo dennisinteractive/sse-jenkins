@@ -826,9 +826,6 @@ if (typeof module !== 'undefined') {
       console.log(entry);
     }
     catch (e) {}
-    finally {
-      return;
-    }
   }
 
   /**

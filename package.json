@@ -2,7 +2,7 @@
   "name": "sse-jenkins",
   "author": "Dennis Publishing",
   "description": "A Jenkins deployment notification relay server and client.",
-  "version": "0.0.1",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "start": "node app.js"
