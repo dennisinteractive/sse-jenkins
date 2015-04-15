@@ -1,3 +1,4 @@
+/* jshint node: true */
 /**
  * Module dependencies.
  */
@@ -10,21 +11,18 @@ var routes = require('./routes');
 var user = require('./routes/user');
 var http = require('http');
 var path = require('path');
-var sys = require('sys');
 var fs = require('fs');
-var url = require('url');
 
 var app = express();
 
 // Stores the active connections
 var connections = {};
-var exec = require('child_process').exec;
 // Reconnect time for browsers if connection is dropped.
 var reconnectTime = 15000;
 
 // all environments
 app.set('port', process.env.PORT || 8090);
-app.set('mapfile', process.env.MAPFILE || '/path/to/mapping.file')
+app.set('mapfile', process.env.MAPFILE || '/path/to/mapping.file');
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.use(express.favicon());
@@ -36,7 +34,7 @@ app.use(app.router);
 app.use(express.static(path.join(__dirname, 'public')));
 
 // development only
-if ('development' == app.get('env')) {
+if ('development' === app.get('env')) {
   app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
 }
 
@@ -61,9 +59,9 @@ function sseHeaders(res) {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': '*'
   });
-  res.write(":" + Array(2049).join(" ") + "\n"); // 2kB padding for IE
+  res.write(":" + new Array(2049).join(" ") + "\n"); // 2kB padding for IE
   res.write("retry: " + reconnectTime + '\n');
 }
 
@@ -73,9 +71,10 @@ function sseHeaders(res) {
 function sendSSE(site, res, id, message) {
   res.write('id: ' + id + '\n');
   res.write("data: {\n");
-  res.write("data: \"title\": \"" + title + "\",\n");
+  res.write("data: \"type\": \"" + message.type + "\",\n");
+  res.write("data: \"title\": \"" + message.title + "\",\n");
   res.write("data: \"timestamp\": \"" + id + "\",\n");
-  res.write("data: \"msg\": \"" + message + "\"\n");
+  res.write("data: \"msg\": \"" + message.content + "\"\n");
   res.write("data: }\n\n");
 }
 
@@ -95,11 +94,10 @@ function sendSSEComment(originPath, res, id, comment) {
  * Debug function to spit out incoming headers.
  */
 function debugHeaders(req) {
-  sys.puts('URL: ' + req.url);
+  console.log('URL: ' + req.url);
   for (var key in req.headers) {
-    sys.puts(key + ': ' + req.headers[key]);
+    console.log(key + ': ' + req.headers[key]);
   }
-  sys.puts('\n\n');
 }
 
 /**
@@ -109,27 +107,28 @@ function stripUrl(val) {
   var reg = /^(http\:\/\/|https\:\/\/)?([^\/:?#]+)(?:[\/:?#]|$)/i;
 
   var retVal = val;
-  // Strip off the protocol part of the url, 
+  // Strip off the protocol part of the url,
   // just to simplify our matching and storing.
-  if ( (retVal = reg.exec(val)) == null ) {
+  if ( (retVal = reg.exec(val)) === null ) {
     return val;
   }
   else {
-    return retVal[2]; 
+    return retVal[2];
   }
 }
 
 /**
  * Wrapper to send an SSE message to an array of connections.
  */
-function messageSites(sitesToMessage) {
+function messageSites(sitesToMessage, message) {
   var len = sitesToMessage.length;
   for (var j=0; j<len; j++) {
     // Broadcast to all registered connections for this site.
     if (connections[sitesToMessage[j]]) {
       connections[sitesToMessage[j]].forEach(function (res) {
         console.log("Sending broadcast message to connected editors for " + sitesToMessage[j]);
-        sendSSE(sitesToMessage[j], res, (new Date).getTime(), message);
+        var date = new Date();
+        sendSSE(sitesToMessage[j], res, date.getTime(), message);
       });
     }
     else {
@@ -145,30 +144,30 @@ app.use(express.urlencoded()); // to support URL-encoded bodies
 app.get('/ssestatus', function(req, res) {
   debugHeaders(req);
 
-  if (req.headers.accept && req.headers.accept == 'text/event-stream') {
-    var reg = /^https?\:\/\/([^\/:?#]+)(?:[\/:?#]|$)/i;
-    var originPath = reg.exec( req.headers.origin )[1];
-    // Send a comment acknowledgement and keep the connection open.
-    sseHeaders(res);
-    sendSSEComment(originPath, res, (new Date).getTime(), "Connection acknowledgement");
-  } else {
+  if (!req.headers.accept && req.headers.accept !== 'text/event-stream') {
     console.log("Headers not accepted by browser. Closing connection");
     res.writeHead(200, {'Content-Type': 'text/html'});
     res.write(fs.readFileSync(__dirname + '/sse-node.html'));
     res.end();
   }
 
+  var reg = /^https?\:\/\/([^\/:?#]+)(?:[\/:?#]|$)/i;
+  var originPath = reg.exec( req.headers.origin )[1];
+  var date = new Date();
+  // Send a comment acknowledgement and keep the connection open.
+  sseHeaders(res);
+  sendSSEComment(originPath, res, date.getTime(), "Connection acknowledgement");
+
   // As part of Yaffle Polyfill, send periodic comment to keep conn alive
   // https://github.com/Yaffle/EventSource
-  var parsedURL = url.parse(req.url, true);
-  var lastEventId = Number(req.headers["last-event-id"]) || Number(parsedURL.query.lastEventId) || 0;
   connections[originPath] = connections[originPath] || [];
   connections[originPath].push(res);
   console.log("Adding this connection to the list of connections.");
 
   // Sends a SSE every X seconds on a single connection.
   var commentInterval = setInterval(function() {
-    sendSSEComment(originPath, res, (new Date).getTime());
+    var date = new Date();
+    sendSSEComment(originPath, res, date.getTime());
   }, reconnectTime);
 
   res.on("close", function () {
@@ -177,44 +176,52 @@ app.get('/ssestatus', function(req, res) {
     // Remove comment sending for this connection
     clearInterval(commentInterval);
   });
-  
+
 });
 
 
 // Receive notifications from Jenkins
 app.post('/rcvstatus', function(req, res) {
   console.log(req.body);
-  var jobName = req.body.name;
-  var buildNum = req.body.build.number;
   var buildStatus = req.body.build.status;
   var buildPhase = req.body.build.phase;
   var siteFor = stripUrl(req.body.build.parameters.Site);
   var sitesToMessage = [ siteFor ];
+  var message;
 
   res.writeHead(200, {'Content-Type': 'text/html'});
-  res.write('Thank you, status message received.');
+  res.write("Thank you, status message received.\n");
   res.end();
 
   switch ( buildPhase ) {
     case 'STARTED':
-      title = "Deployment starting!";
-      message = "A code update for this site will start in one minute, which will temporarily put the site " +
-                "& CMS in maintenance mode. Please save your unfinished work immediately to avoid loss of data.";
+      message = {
+        type: 'info',
+        title: 'Deployment starting',
+        content: 'A code update for this site will start in one minute, which will temporarily put the site ' +
+          '& CMS into maintenance mode. Please save your unfinished work immediately to avoid loss of data.'
+      };
       break;
     case 'COMPLETED':
       // Do Nothing. Send nothing.
       return;
     case 'FINISHED':
-      if (buildStatus == 'SUCCESS') {
-        title = "Deployment completed :-)";
-        message = "The code update has finished successfully and the site and CMS should be back online. " +
-                  "Contact your product manager if you have any problems.";
+      if (buildStatus === 'SUCCESS') {
+        message = {
+          type: 'success',
+          title: 'Deployment completed',
+          content: 'The code update has finished successfully and the site and CMS should be back online. ' +
+                   'Contact your product manager if you have any problems.'
+        };
       }
       else {
-        title = "Deployment problem :-(";
-        message = "A problem occurred during the code update. We are aware and will be attempting to " +
-                  "resolve the issue and redeploy as soon as possible. There may be issues with the " +
-                  "site and CMS during this period.";
+        message = {
+          type: 'error',
+          title: 'Deployment problem',
+          content: 'A problem occurred during the code update. We are aware and will be attempting to ' +
+                   'resolve the issue and redeploy as soon as possible. There may be issues with the ' +
+                   'site and CMS during this period.'
+        };
       }
       break;
       // Do nothing for other phases.
@@ -236,7 +243,7 @@ app.post('/rcvstatus', function(req, res) {
 
         // Read the data in JSON format from the map file.
         data = JSON.parse(data);
-        
+
         var patt = new RegExp(siteFor);
         var matched = false;
         // Going through all arrays for matching siteFor.
@@ -255,17 +262,17 @@ app.post('/rcvstatus', function(req, res) {
         }
 
         if (matched) {
-          // Pass all site names corresponding to siteFor through 
+          // Pass all site names corresponding to siteFor through
           // a stripping function before they are sent for messaging.
           sitesToMessage = data[key].map(stripUrl);
           console.log('Message will be sent to connections on these urls: ');
           console.log(sitesToMessage);
         }
-        messageSites(sitesToMessage);
+        messageSites(sitesToMessage, message);
       });
     }
     else {
-      messageSites(sitesToMessage);
+      messageSites(sitesToMessage, message);
     }
 
   });

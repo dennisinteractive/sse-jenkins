@@ -1,0 +1,25 @@
+.humane,
+.humane {
+  font-family: sans-serif;
+  text-align: left;
+  width: 300px;
+}
+.humane ul {
+  position: relative;
+}
+.humane .message-title {
+  font-weight: bold;
+  margin-bottom: 10px;
+  padding-right: 60px;
+}
+.humane .message-timestamp {
+  text-align: right;
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 80%;
+}
+.humane .message {
+  font-size: 90%;
+  line-height: 133%;
+}
